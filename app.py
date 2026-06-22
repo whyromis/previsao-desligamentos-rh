@@ -27,33 +27,48 @@ meses_futuro = st.sidebar.slider("2. Meses para prever:", min_value=1, max_value
 # FUNÇÕES CORE (COM CACHE PARA PERFORMANCE)
 # ---------------------------------------------------------
 @st.cache_data
+@st.cache_data
 def processar_dados(dfnovo):
-    # ---------------------------------------------------------
-    # TRATAMENTO INICIAL DA BASE BRUTA (O que faltou!)
-    # ---------------------------------------------------------
-    # Padroniza os nomes das colunas para maiúsculo para evitar erro de digitação
+    # 1. Padroniza colunas
     dfnovo.columns = [col.strip().upper() for col in dfnovo.columns]
     
-    # Se a base tem 'MÊS REFERÊNCIA' e não tem 'ANO', nós criamos!
-    if 'ANO' not in dfnovo.columns and 'MÊS REFERÊNCIA' in dfnovo.columns:
-        dfnovo['MÊS REFERÊNCIA'] = pd.to_datetime(dfnovo['MÊS REFERÊNCIA'])
+    # 2. Correção de Data e Anomalias (BLINDADO)
+    if 'MÊS REFERÊNCIA' in dfnovo.columns:
+        # FORÇA a conversão para data, ignorando o que o Pandas acha que é.
+        # errors='coerce' transforma textos inválidos (ex: linhas em branco) em NaT (Not a Time)
+        dfnovo['MÊS REFERÊNCIA'] = pd.to_datetime(dfnovo['MÊS REFERÊNCIA'], dayfirst=True, errors='coerce')
+        
+        # Remove linhas vazias ou com datas corrompidas para não quebrar o código
+        dfnovo = dfnovo.dropna(subset=['MÊS REFERÊNCIA'])
+        
+        # Agora sim é 100% seguro usar o .dt
         dfnovo['ANO'] = dfnovo['MÊS REFERÊNCIA'].dt.year
         dfnovo['MÊS'] = dfnovo['MÊS REFERÊNCIA'].dt.month
+        
+        # REMOVE anomalias futuristas de cara (ex: o caso do Marcus de 2027)
+        ano_atual = pd.Timestamp.now().year
+        dfnovo = dfnovo[dfnovo['ANO'] <= ano_atual]
+        
+        # PONTO CRÍTICO CORRIGIDO: A verdadeira data máxima da base
+        data_maxima_base = dfnovo['MÊS REFERÊNCIA'].max()
 
-    # Garantindo que o Status não tem espaços vazios (ex: 'DESLIGADO ')
     if 'STATUS NO MÊS' in dfnovo.columns:
         dfnovo['STATUS NO MÊS'] = dfnovo['STATUS NO MÊS'].astype(str).str.strip().str.upper()
         
-    # ---------------------------------------------------------
-    # RESTANTE DO CÓDIGO (Igual ao anterior)
-    # ---------------------------------------------------------
+    # 3. Agrupamento de Desligados
     desligamento_setor = dfnovo[dfnovo['STATUS NO MÊS'] == 'DESLIGADO'].groupby(['ANO', 'MÊS', 'SETOR']).size().reset_index(name='QUANTIDADE_DESLIGADOS')
     
-    desligamento_setor = desligamento_setor[desligamento_setor['ANO'] <= pd.Timestamp.now().year]
+    # Só processa se houver desligamentos
+    if not desligamento_setor.empty:
+        desligamento_setor['DATA'] = pd.to_datetime(desligamento_setor['ANO'].astype(str) + '-' + desligamento_setor['MÊS'].astype(str) + '-01')
+        data_minima_base = desligamento_setor['DATA'].min()
+    else:
+        # Fallback de segurança se a base for vazia de desligados
+        return pd.DataFrame(), pd.Series(dtype='category')
     
-    desligamento_setor['DATA'] = pd.to_datetime(desligamento_setor['ANO'].astype(str) + '-' + desligamento_setor['MÊS'].astype(str) + '-01')
-    
-    datas_unicas = pd.date_range(start=desligamento_setor['DATA'].min(), end=desligamento_setor['DATA'].max(), freq='MS')
+    # 4. A MAGIA TEMPORAL CORRIGIDA
+    # Cria os meses vazios até a data máxima da EMPRESA, e não do último desligado!
+    datas_unicas = pd.date_range(start=data_minima_base, end=data_maxima_base, freq='MS')
     setores_unicos = dfnovo['SETOR'].dropna().unique()
     
     idx_completo = pd.MultiIndex.from_product([datas_unicas, setores_unicos], names=['DATA', 'SETOR'])
@@ -62,11 +77,13 @@ def processar_dados(dfnovo):
     df_ml = pd.merge(df_base, desligamento_setor[['DATA', 'SETOR', 'QUANTIDADE_DESLIGADOS']], on=['DATA', 'SETOR'], how='left')
     df_ml['QUANTIDADE_DESLIGADOS'] = df_ml['QUANTIDADE_DESLIGADOS'].fillna(0)
     
+    # 5. Lags e Feature Engineering
     df_ml = df_ml.sort_values(by=['SETOR', 'DATA'])
     df_ml['lag_1'] = df_ml.groupby('SETOR')['QUANTIDADE_DESLIGADOS'].shift(1)
     df_ml['lag_2'] = df_ml.groupby('SETOR')['QUANTIDADE_DESLIGADOS'].shift(2)
     df_ml['media_movel_3m'] = df_ml.groupby('SETOR')['lag_1'].transform(lambda x: x.rolling(window=3).mean())
     df_ml['mes_do_ano'] = df_ml['DATA'].dt.month
+    
     df_ml = df_ml.dropna()
     df_ml['SETOR_cat'] = df_ml['SETOR'].astype('category').cat.codes
     
@@ -154,33 +171,30 @@ if arquivo_upload is not None:
         plt.legend()
         st.pyplot(fig)
         
-        # ---- TABELA POR SETOR ----
+        # ---- TABELA POR SETOR (visão acumulada) ----
         st.subheader("🎯 Radar de Reposição por Setor")
         
-        tabela_rh_resumo = tabela_futuro.groupby(['DATA', 'SETOR'])['QUANTIDADE_DESLIGADOS'].sum().reset_index()
+        # MUDANÇA: Agrupamos apenas por setor, somando o risco de todo o período escolhido
+        tabela_rh_resumo = tabela_futuro.groupby('SETOR')['QUANTIDADE_DESLIGADOS'].sum().reset_index()
         
-        # -------------------------------------------------------------------------
-        # FILTRO DE RUÍDO (O Corretor da Matemática de Poisson)
-        # -------------------------------------------------------------------------
-        # Definimos que previsões menores que 0.1 (10% de chance) são ruído e viram 0.
-        piso_relevancia = 0.1
+        # Como estamos somando vários meses, o piso de 0.5 (meia vaga de probabilidade acumulada) é perfeito
+        piso_relevancia = 0.5 
         tabela_filtrada = tabela_rh_resumo[tabela_rh_resumo['QUANTIDADE_DESLIGADOS'] >= piso_relevancia].copy()
         
-        # Agora sim, aplicamos o teto (ceil) apenas no risco real que passou do piso
+        # Transforma o risco fracionado em vagas inteiras para repor
         tabela_filtrada['VAGAS_PARA_REPOR'] = np.ceil(tabela_filtrada['QUANTIDADE_DESLIGADOS']).astype(int)
         
-        # Para evitar que o Streamlit ordene os meses em ordem alfabética (ex: Abril antes de Janeiro),
-        # nós ordenamos a tabela pela coluna de DATA real primeiro, e só depois formatamos para texto.
-        tabela_filtrada = tabela_filtrada.sort_values(by=['DATA', 'VAGAS_PARA_REPOR'], ascending=[True, False])
-        tabela_filtrada['DATA_FORMATADA'] = tabela_filtrada['DATA'].dt.strftime('%m/%Y')
+        # Ordena do setor com maior necessidade para o menor
+        tabela_filtrada = tabela_filtrada.sort_values(by='VAGAS_PARA_REPOR', ascending=False)
         
-        # Selecionando as colunas finais
-        tabela_final_rh = tabela_filtrada[['DATA_FORMATADA', 'SETOR', 'VAGAS_PARA_REPOR']].rename(columns={'DATA_FORMATADA': 'DATA'})
+        # Selecionando colunas finais
+        tabela_final_rh = tabela_filtrada[['SETOR', 'VAGAS_PARA_REPOR']]
         
         # Exibição
         if tabela_final_rh.empty:
-            st.success("🎉 Ótima notícia! O modelo não detectou risco significativo de saídas por setor neste período.")
+            st.success("🎉 Ótima notícia! Risco difuso. Nenhum setor tem concentração alta de desligamentos prevista.")
         else:
+            st.markdown(f"**Atenção:** Os {tabela_final_rh['VAGAS_PARA_REPOR'].sum()} desligamentos com maior probabilidade estão concentrados nestes setores:")
             st.dataframe(tabela_final_rh, use_container_width=True)
         
             # Botão de Download
@@ -188,9 +202,10 @@ if arquivo_upload is not None:
             st.download_button(
                 label="📥 Baixar Plano de Reposição (CSV)",
                 data=csv,
-                file_name='radar_reposicao_estagiarios.csv',
+                file_name='radar_reposicao_acumulado.csv',
                 mime='text/csv',
             )
+            
     except KeyError as e:
         st.error(f"Erro nas colunas do arquivo. Certifique-se de que a base possui as colunas originais (ANO, MÊS, SETOR, STATUS NO MÊS). Erro técnico: {e}")
 else:
