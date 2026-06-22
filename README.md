@@ -1,13 +1,13 @@
 # 🎯 Radar Preditivo de RH: Previsão de Desligamentos com Inteligência Artificial
 
-<img width="1816" height="814" alt="image" src="https://github.com/user-attachments/assets/b12960e7-1be0-4e94-894f-02037812cea8" />
-
 ![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
 ![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B.svg)
 ![XGBoost](https://img.shields.io/badge/Machine%20Learning-XGBoost-green)
 ![Status](https://img.shields.io/badge/Status-Em%20Produ%C3%A7%C3%A3o-success)
 
 🔗 **[Acesse a aplicação rodando em produção aqui]** *https://previsao-desligamentos-rh-wug8bhfs5xjmzad4reezdh.streamlit.app/*
+
+<img width="1816" height="814" alt="image" src="https://github.com/user-attachments/assets/b12960e7-1be0-4e94-894f-02037812cea8" />
 
 ## 📖 O Problema de Negócio
 A alta rotatividade (turnover) de estagiários é um desafio clássico para o setor de Recursos Humanos. A reposição de talentos exige tempo para recrutamento, seleção e onboarding. Quando o RH atua de forma reativa (só começa a procurar após o desligamento), as áreas de negócio sofrem com a queda de produtividade.
