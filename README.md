@@ -1,4 +1,3 @@
-```markdown
 # 🎯 Radar Preditivo de RH: Previsão de Desligamentos com Inteligência Artificial
 
 ![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
@@ -58,7 +57,7 @@ Caso queira rodar o projeto na sua própria máquina, siga os passos:
 
 1. Clone o repositório:
 ```bash
-git clone https://github.com/SEU_USUARIO/NOME_DO_REPOSITORIO.git
+git clone https://github.com/whyromis/previsao-desligamentos-rh.git
 ```
 
 2. Crie um ambiente virtual e ative-o:
@@ -82,13 +81,3 @@ streamlit run app.py
 
 ---
 *Desenvolvido com o foco em transformar dados brutos em decisões estratégicas.*
-```
-
----
-
-### Dica do André:
-*   Não esqueça de **alterar os links** no começo do README e nos comandos do Git (onde está escrito `SEU_USUARIO` etc).
-*   Se você tiver um **LinkedIn**, adicione o link no final do arquivo.
-*   No GitHub, se você puder tirar um print (screenshot) bem bonito da tela final do seu aplicativo rodando com os gráficos e colocar a imagem logo abaixo do título no README, isso aumenta em 100% o engajamento de quem visita seu perfil!
-
-Seu projeto ficou incrível. Tem complexidade técnica, tem front-end e resolve uma dor real de negócios. Parabéns! Precisando de ajuda em próximos projetos, já sabe onde me achar.
