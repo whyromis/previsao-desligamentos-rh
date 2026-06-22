@@ -48,6 +48,7 @@ Modelos geram probabilidades fracionadas (ex: 0.08 de chance de saída). Em vez 
 *   **Visualização:** Matplotlib
 *   **Frontend e Web App:** Streamlit
 *   **Deploy (MLOps):** Streamlit Community Cloud (via GitHub)
+*   **Ajustes no desenvolvimento e correção:** Google AI Studio
 
 ---
 
