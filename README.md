@@ -1,3 +1,4 @@
+```markdown
 # 🎯 Radar Preditivo de RH: Previsão de Desligamentos com Inteligência Artificial
 
 ![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
@@ -48,7 +49,6 @@ Modelos geram probabilidades fracionadas (ex: 0.08 de chance de saída). Em vez 
 *   **Visualização:** Matplotlib
 *   **Frontend e Web App:** Streamlit
 *   **Deploy (MLOps):** Streamlit Community Cloud (via GitHub)
-*   **Ajustes no desenvolvimento e correção:** Google AI Studio
 
 ---
 
@@ -59,3 +59,36 @@ Caso queira rodar o projeto na sua própria máquina, siga os passos:
 1. Clone o repositório:
 ```bash
 git clone https://github.com/SEU_USUARIO/NOME_DO_REPOSITORIO.git
+```
+
+2. Crie um ambiente virtual e ative-o:
+```bash
+python -m venv venv
+# No Windows:
+venv\Scripts\activate
+# No Linux/Mac:
+source venv/bin/activate
+```
+
+3. Instale as dependências:
+```bash
+pip install -r requirements.txt
+```
+
+4. Execute a aplicação:
+```bash
+streamlit run app.py
+```
+
+---
+*Desenvolvido com o foco em transformar dados brutos em decisões estratégicas.*
+```
+
+---
+
+### Dica do André:
+*   Não esqueça de **alterar os links** no começo do README e nos comandos do Git (onde está escrito `SEU_USUARIO` etc).
+*   Se você tiver um **LinkedIn**, adicione o link no final do arquivo.
+*   No GitHub, se você puder tirar um print (screenshot) bem bonito da tela final do seu aplicativo rodando com os gráficos e colocar a imagem logo abaixo do título no README, isso aumenta em 100% o engajamento de quem visita seu perfil!
+
+Seu projeto ficou incrível. Tem complexidade técnica, tem front-end e resolve uma dor real de negócios. Parabéns! Precisando de ajuda em próximos projetos, já sabe onde me achar.
