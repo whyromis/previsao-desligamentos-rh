@@ -155,7 +155,7 @@ if arquivo_upload is not None:
         
         # ---- GRÁFICO PRINCIPAL ----
         st.subheader("📈 Evolução e Tendência de Desligamentos (Empresa)")
-        fig, ax = plt.subplots(figsize=(18, 8))
+        fig, ax = plt.subplots(figsize=(25, 8))
         plt.style.use('seaborn-v0_8-whitegrid')
         
         futuro_plot = pd.concat([historico_macro.iloc[[-1]], futuro_macro])
