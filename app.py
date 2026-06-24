@@ -45,7 +45,7 @@ def processar_dados(dfnovo):
         dfnovo['ANO'] = dfnovo['MÊS REFERÊNCIA'].dt.year
         dfnovo['MÊS'] = dfnovo['MÊS REFERÊNCIA'].dt.month
         
-        # REMOVE anomalias futuristas de cara (ex: o caso do Marcus de 2027)
+        # REMOVE anomalias futuristas de cara 
         ano_atual = pd.Timestamp.now().year
         dfnovo = dfnovo[dfnovo['ANO'] <= ano_atual]
         
@@ -155,7 +155,7 @@ if arquivo_upload is not None:
         
         # ---- GRÁFICO PRINCIPAL ----
         st.subheader("📈 Evolução e Tendência de Desligamentos (Empresa)")
-        fig, ax = plt.subplots(figsize=(12, 4))
+        fig, ax = plt.subplots(figsize=(15, 8))
         plt.style.use('seaborn-v0_8-whitegrid')
         
         futuro_plot = pd.concat([historico_macro.iloc[[-1]], futuro_macro])
